@@ -9,12 +9,14 @@ function getMongoUri() {
 }
 
 export async function connectDatabase() {
+  const mongoUri = getMongoUri();
+
   try {
     const serverSelectionTimeoutMS = Number(
       process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS || 5000,
     );
 
-    await mongoose.connect(getMongoUri(), { serverSelectionTimeoutMS });
+    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS });
     console.info('MongoDB connection established');
   } catch (error) {
     console.error('MongoDB connection failed:', error.message);
