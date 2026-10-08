@@ -9,11 +9,17 @@ export const findById = async (id) => {
 }
 
 export const installedBy = async () => {
-    return await Installation.find({isInstalled: true}).populate('installedBy');
+    return await Installation.find({isInstalled: true})
+      .populate('installedBy', 'name email role isActive');
 }
 
 export const findStatus = async (session) => {
-  const status = await Installation.findOne({}, "isInstalled installedAt").session(session);
+  const status = await Installation.findOne(
+    {},
+    "isInstalled installedAt installedBy",
+  )
+    .populate('installedBy', 'name email role isActive')
+    .session(session);
   return status || { isInstalled: false };
 };
 
