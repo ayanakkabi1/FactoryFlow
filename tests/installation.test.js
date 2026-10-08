@@ -38,6 +38,16 @@ describe('Installation API', () => {
 
     const installationInDb = await Installation.findOne({ isInstalled: true });
     expect(installationInDb).not.toBeNull();
+
+    const statusRes = await request(app).get('/api/installation/status');
+
+    expect(statusRes.body.data.installedBy).toMatchObject({
+      name: adminData.name,
+      email: adminData.email,
+      role: 'ADMIN',
+      isActive: true,
+    });
+    expect(statusRes.body.data.installedBy.password).toBeUndefined();
   });
 
   it('should refuse a second installation attempt', async () => {
