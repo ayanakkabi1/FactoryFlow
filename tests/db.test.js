@@ -54,6 +54,7 @@ describe('database connection', () => {
   it('uses the configured server selection timeout', async () => {
     process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS = '1000';
     connectMock.mockResolvedValue(undefined);
+    const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
 
     await connectDatabase();
 
@@ -61,6 +62,8 @@ describe('database connection', () => {
       'mongodb://mongo:27017/factoryflow_test',
       { serverSelectionTimeoutMS: 1000 },
     );
+
+    infoSpy.mockRestore();
   });
 
   it('throws when MONGO_URI is missing', async () => {

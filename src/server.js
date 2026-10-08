@@ -1,13 +1,7 @@
 import 'dotenv/config';
-import express from 'express';
 import { connectDatabase, disconnectDatabase } from './config/db.js';
-
-const app = express();
+import app from './app.js';
 const port = Number(process.env.PORT) || 5000;
-
-app.get('/', (req, res) => {
-  res.send('FactoryFlow API is running');
-});
 
 async function startServer() {
   await connectDatabase();
