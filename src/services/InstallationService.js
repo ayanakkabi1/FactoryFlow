@@ -48,6 +48,13 @@ export const initialize = async (data) => {
     });
 
     return result;
+  } catch (error) {
+    if (error.message?.includes('Transaction numbers are only allowed')) {
+      error.statusCode = 503;
+      error.message = 'MongoDB doit être configuré en replica set pour effectuer l’installation.';
+    }
+
+    throw error;
   } finally {
     await session.endSession();
   }

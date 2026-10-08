@@ -13,7 +13,12 @@ export const installedBy = async () => {
 }
 
 export const findStatus = async (session) => {
-  const status = await Installation.findOne({}, "isInstalled installedAt").session(session);
+  const status = await Installation.findOne(
+    {},
+    "isInstalled installedAt installedBy",
+  )
+    .populate('installedBy', 'name email role isActive')
+    .session(session);
   return status || { isInstalled: false };
 };
 
