@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { jest } from '@jest/globals';
 import app from '../src/app.js';
 import User from '../src/models/User.js';
 import Installation from '../src/models/Installation.js';
@@ -56,6 +57,27 @@ describe('Installation API', () => {
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
     expect(res.body.message).toBe("L'application est déjà installée.");
+  });
+
+  it('should rollback the admin when installation record creation fails', async () => {
+    const installationCreateSpy = jest
+      .spyOn(Installation, 'create')
+      .mockRejectedValueOnce(new Error('installation record unavailable'));
+
+    const res = await request(app)
+      .post('/api/installation')
+      .send({
+        name: 'Rollback Admin',
+        email: 'rollback@factoryflow.com',
+        password: 'password123',
+      });
+
+    expect(res.status).toBe(500);
+    expect(res.body.success).toBe(false);
+    expect(await User.findOne({ email: 'rollback@factoryflow.com' })).toBeNull();
+    expect(await Installation.findOne({ isInstalled: true })).toBeNull();
+
+    installationCreateSpy.mockRestore();
   });
 
 });
