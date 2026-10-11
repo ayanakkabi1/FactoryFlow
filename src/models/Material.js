@@ -4,7 +4,7 @@ const materialSchema = new mongoose.Schema({
     reference :{
        type : String ,
        required : [true, 'La référence est obligatoire'],
-       Unique : true,
+       unique : true,
        trim: true,
        index : true,
     },

@@ -3,6 +3,7 @@ import express from 'express';
 import installationRoute from './routes/InstallationRoute.js';
 import authRoute from './routes/authRoute.js';
 import userRoute from './routes/userRoute.js';
+import materialRoute from './routes/materialRoutes.js';
 
 const app = express();
 
@@ -10,6 +11,7 @@ app.use(express.json());
 app.use('/api/installation', installationRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/users', userRoute);
+app.use('/api/materials', materialRoute);
 
 app.get('/', (req, res) => {
   res.send('FactoryFlow API is running');
