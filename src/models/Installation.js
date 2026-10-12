@@ -14,6 +14,11 @@ const installationSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref:'User'
         },
+        adminInitialEmail: {
+            type: String,
+            trim: true,
+            lowercase: true,
+        },
     },
     {
         timestamps: true,
