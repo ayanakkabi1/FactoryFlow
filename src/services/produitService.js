@@ -1,4 +1,5 @@
 import * as produitRepository from '../repositories/produitRepositorie.js';
+import * as compositionRepository from '../repositories/compositionRepository.js';
 
 export const getAllProducts = async () => {
   return produitRepository.findAllProducts();
@@ -26,5 +27,9 @@ export const updateProduct = async (id, product) => {
 };
 
 export const deleteProduct = async (id) => {
-  return produitRepository.deleteProduct(id);
+  const product = await produitRepository.deleteProduct(id);
+  if (product) {
+    await compositionRepository.deleteCompositionByProductId(id);
+  }
+  return product;
 };
