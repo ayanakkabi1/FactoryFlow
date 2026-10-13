@@ -6,6 +6,7 @@ import userRoute from './routes/userRoute.js';
 import materialRoute from './routes/materialRoutes.js';
 import stockRoute from './routes/stockRoutes.js';
 import produitRoute from './routes/produitRoute.js';
+import compositionRoute from './routes/compositionRoutes.js';
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use('/api/users', userRoute);
 app.use('/api/materials', materialRoute);
 app.use('/api/stock', stockRoute);
 app.use('/api/produits', produitRoute);
+app.use('/api/compositions', compositionRoute);
 
 app.get('/', (req, res) => {
   res.send('FactoryFlow API is running');
