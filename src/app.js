@@ -4,6 +4,8 @@ import installationRoute from './routes/InstallationRoute.js';
 import authRoute from './routes/authRoute.js';
 import userRoute from './routes/userRoute.js';
 import materialRoute from './routes/materialRoutes.js';
+import stockRoute from './routes/stockRoutes.js';
+import produitRoute from './routes/produitRoute.js';
 
 const app = express();
 
@@ -12,6 +14,8 @@ app.use('/api/installation', installationRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/users', userRoute);
 app.use('/api/materials', materialRoute);
+app.use('/api/stock', stockRoute);
+app.use('/api/produits', produitRoute);
 
 app.get('/', (req, res) => {
   res.send('FactoryFlow API is running');

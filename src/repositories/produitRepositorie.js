@@ -1,22 +1,34 @@
 import Produit from '../models/Produit.js';
+import '../models/CompositionItem.js';
 
-const createProduct = async (productData) => {
-  const product = new Product(productData);
-  return await product.save();
+export const createProduct = async (productData) => {
+  return Produit.create(productData);
 };
 
-const findAllProducts = async () => {
-  return await Product.find().populate('composition.matierePremiereId');
+export const findAllProducts = async () => {
+  return Produit.find().populate({
+    path: 'composition',
+    populate: { path: 'matiere' },
+  });
 };
 
-const findProductById = async (id) => {
-  return await Product.findById(id).populate('composition.matierePremiereId');
+export const findProductById = async (id) => {
+  return Produit.findById(id).populate({
+    path: 'composition',
+    populate: { path: 'matiere' },
+  });
 };
 
-const updateProduct = async (id, updateData) => {
-  return await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+export const updateProduct = async (id, updateData) => {
+  return Produit.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true,
+  }).populate({
+    path: 'composition',
+    populate: { path: 'matiere' },
+  });
 };
 
-const deleteProduct = async (id) => {
-  return await Product.findByIdAndDelete(id);
+export const deleteProduct = async (id) => {
+  return Produit.findByIdAndDelete(id);
 };
