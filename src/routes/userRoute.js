@@ -1,5 +1,5 @@
 import express from 'express';
-import * as userController from '../controllers/userController.js.js';
+import * as userController from '../controllers/userController.js';
 import { verifyToken, checkRole } from '../middlewares/authMiddleware.js';
 import {
   operatorRules,

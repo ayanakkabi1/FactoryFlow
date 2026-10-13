@@ -1,13 +1,12 @@
 import bcrypt from 'bcryptjs';
-import * as userRepository from '../repositories/UserRepositorie.js';
+import * as userRepository from '../repositories/userRepository.js';
+import { ConflictError, NotFoundError } from '../errors/AppError.js';
 
 const createUserService = async ({ name, email, password }, role) => {
   const normalizedEmail = email.trim().toLowerCase();
-  const existingUser = await userRepository.findUserByemail(normalizedEmail);
+  const existingUser = await userRepository.findUserByEmail(normalizedEmail);
   if (existingUser) {
-    const error = new Error('Un utilisateur existe déjà avec cet email.');
-    error.statusCode = 409;
-    throw error;
+    throw new ConflictError('Un utilisateur existe déjà avec cet email.');
   }
 
   const user = await userRepository.createUser({
@@ -37,9 +36,7 @@ export const createAdminService = async (data) => {
 export const getUserProfile = async (userId) => {
   const user = await userRepository.findUserById(userId);
   if (!user) {
-    const error = new Error('Utilisateur introuvable.');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Utilisateur introuvable.');
   }
 
   return user;

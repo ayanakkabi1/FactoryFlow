@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
-import * as installationRepository from '../repositories/InstallationRepositorie.js';
+import * as installationRepository from '../repositories/installationRepository.js';
+import { BadRequestError } from '../errors/AppError.js';
 
 export const getStatus = async () => {
   return await installationRepository.findStatus();
@@ -18,23 +19,29 @@ export const initialize = async (data) => {
     await session.withTransaction(async () => {
       const currentStatus = await installationRepository.findStatus(session);
       if (currentStatus && currentStatus.isInstalled) {
-        const error = new Error("L'application est déjà installée.");
-        error.statusCode = 400;
-        throw error;
+        throw new BadRequestError("L'application est déjà installée.");
       }
 
-      const [createdAdmin] = await User.create([{
-        name,
-        email,
-        password: hashedPassword,
-        role: 'ADMIN',
-      }], { session });
+      const [createdAdmin] = await User.create(
+        [
+          {
+            name,
+            email,
+            password: hashedPassword,
+            role: 'ADMIN',
+          },
+        ],
+        { session }
+      );
 
-      await installationRepository.createInstallation({
-        isInstalled: true,
-        installedAt: new Date(),
-        installedBy: createdAdmin._id,
-      }, session);
+      await installationRepository.createInstallation(
+        {
+          isInstalled: true,
+          installedAt: new Date(),
+          installedBy: createdAdmin._id,
+        },
+        session
+      );
 
       result = {
         message: 'Installation réussie',
@@ -51,7 +58,8 @@ export const initialize = async (data) => {
   } catch (error) {
     if (error.message?.includes('Transaction numbers are only allowed')) {
       error.statusCode = 503;
-      error.message = 'MongoDB doit être configuré en replica set pour effectuer l’installation.';
+      error.message =
+        'MongoDB doit être configuré en replica set pour effectuer l’installation.';
     }
 
     throw error;

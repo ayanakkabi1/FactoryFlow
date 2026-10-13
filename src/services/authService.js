@@ -1,28 +1,29 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import * as userRepository from '../repositories/userRepository.js';
+import { UnauthorizedError } from '../errors/AppError.js';
 
 export const login = async (email, password) => {
-    const genericError = new Error("Email ou mot de passe incorrect.");
-    genericError.statusCode = 401;
-    const normalizedEmail = email.trim().toLowerCase();
-    const user = await User.findOne({ email: normalizedEmail }).select('+password');
-    if (!user) {
+  const genericError = new UnauthorizedError('Email ou mot de passe incorrect.');
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await userRepository.findUserByEmailWithPassword(normalizedEmail);
+
+  if (!user || !user.isActive) {
     throw genericError;
-    }
-    if (!user.isActive) {
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
     throw genericError;
-    }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-    throw genericError;
-    }
-    const token = jwt.sign(
+  }
+
+  const token = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.JWT_SECRET || 'super_secret_jwt_key',
     { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
-    );
-    return {
+  );
+
+  return {
     message: 'Connexion réussie',
     token,
     user: {
