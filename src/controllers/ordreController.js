@@ -99,7 +99,7 @@ export const getOrdresByStatut = async (req, res, next) => {
 
 export const getMesOrdres = async (req, res, next) => {
   try {
-    const ordres = await orderService.getOrdresByAssigneService(req.user._id);
+    const ordres = await orderService.getOrdresByAssigneService(req.user.userId);
 
     return res.status(200).json({
       success: true,
@@ -132,13 +132,31 @@ export const updateStatut = async (req, res, next) => {
   try {
     const ordre = await orderService.updateStatutService(
       req.params.id,
-      req.body.statut
+      req.body.statut,
+      req.user.userId
     );
 
     return res.status(200).json({
       success: true,
       message: `Statut mis à jour vers ${ordre.statut}`,
       data: ordre,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const demarrerOrdre = async (req, res, next) => {
+  try {
+    const { ordre, besoins } = await orderService.demarrerOrdreService(
+      req.params.id,
+      req.user.userId
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Ordre de fabrication démarré avec succès',
+      data: { ordre, besoins },
     });
   } catch (error) {
     return next(error);

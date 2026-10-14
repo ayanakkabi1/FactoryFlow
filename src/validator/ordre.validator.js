@@ -65,3 +65,9 @@ export const updateStatutRules = [
     .withMessage('Le statut doit être : PLANIFIE, EN_COURS, TERMINE ou ANNULE.'),
 ];
 
+// ─── ID param rules ─────────────────────────────────────────────────
+export const ordreIdRules = [
+  param('id')
+    .isMongoId()
+    .withMessage("L'identifiant de l'ordre de fabrication est invalide."),
+];

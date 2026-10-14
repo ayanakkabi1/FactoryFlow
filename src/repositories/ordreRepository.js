@@ -64,6 +64,22 @@ export const updateStatut = async (id, statut) => {
   );
 };
 
+export const findOrdreByIdWithSession = async (id, session = null) => {
+  return OrdreFabrication.findById(id).session(session);
+};
+
+export const marquerOrdreEnCours = async (id, mouvementIds, session = null) => {
+  return OrdreFabrication.findOneAndUpdate(
+    { _id: id, statut: 'PLANIFIE' },
+    {
+      statut: 'EN_COURS',
+      dateDemarrage: new Date(),
+      $addToSet: { mouvementsStock: { $each: mouvementIds } },
+    },
+    { new: true, runValidators: true, session }
+  );
+};
+
 export const addMouvementStock = async (ordreId, mouvementId) => {
   return populateOrdre(
     OrdreFabrication.findByIdAndUpdate(

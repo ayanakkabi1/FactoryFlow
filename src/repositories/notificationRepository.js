@@ -4,6 +4,10 @@ export const createNotification = async (data) => {
   return await Notification.create(data);
 };
 
+export const createNotifications = async (data, session = null) => {
+  return await Notification.insertMany(data, { session });
+};
+
 export const findNotifications = async (filter = {}) => {
   return await Notification.find(filter)
     .populate('matiere')

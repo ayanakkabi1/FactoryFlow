@@ -4,6 +4,10 @@ export const createMouvement = async(data)=>{
     return await MouvementStock.create(data);
 }
 
+export const createMouvements = async (data, session = null) => {
+    return await MouvementStock.insertMany(data, { session });
+}
+
 export const updateMouvement = async(id,data)=> {
      return await MouvementStock.findByIdAndUpdate(id, data, { new:true, runValidators: true})
 }

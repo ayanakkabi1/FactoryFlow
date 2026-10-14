@@ -104,7 +104,7 @@ describe('Order service', () => {
       assigneA: user._id,
     });
 
-    const started = await updateStatutService(ordre._id, 'EN_COURS');
+    const started = await updateStatutService(ordre._id, 'EN_COURS', user._id);
     expect(started.statut).toBe('EN_COURS');
     expect(started.dateDemarrage).toBeTruthy();
 
@@ -126,7 +126,7 @@ describe('Order service', () => {
       assigneA: user._id,
     });
 
-    await updateStatutService(ordre._id, 'EN_COURS');
+    await updateStatutService(ordre._id, 'EN_COURS', user._id);
 
     await expect(deleteOrdreService(ordre._id)).rejects.toThrow(
       'Impossible de supprimer un ordre de fabrication en cours'

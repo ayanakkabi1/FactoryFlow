@@ -1,7 +1,17 @@
 import mongoose from 'mongoose';
 
+const PRECISION_QUANTITE = 1e6;
+
+export const arrondirQuantite = (valeur) =>
+  Math.round(valeur * PRECISION_QUANTITE) / PRECISION_QUANTITE;
+
 const compositionItemSnapshotSchema = new mongoose.Schema(
   {
+    matiere: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Material',
+      required: [true, 'La matière première est obligatoire'],
+    },
     nomMatiere: {
       type: String,
       required: [true, 'Le nom de la matière première est obligatoire'],
@@ -27,7 +37,7 @@ compositionItemSnapshotSchema.methods.calculerBesoinsTotaux = function (quantite
   if (quantiteOF === undefined || quantiteOF === null || quantiteOF < 0) {
     throw new Error("La quantité de l'ordre de fabrication doit être positive");
   }
-  return this.quantiteUnitaireNecessaire * quantiteOF;
+  return arrondirQuantite(this.quantiteUnitaireNecessaire * quantiteOF);
 };
 
 const CompositionItemSnapshot = mongoose.model(

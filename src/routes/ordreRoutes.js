@@ -8,13 +8,15 @@ import {
   getMesOrdres,
   updateOrdre,
   updateStatut,
-  deleteOrdre,
+  demarrerOrdre,
+  deleteOrdreByAdmin,
 } from '../controllers/ordreController.js';
 import { verifyToken, checkRole } from '../middlewares/authMiddleware.js';
 import {
   createOrdreRules,
   updateOrdreRules,
   updateStatutRules,
+  ordreIdRules,
   validateOrdre,
 } from '../validator/ordre.validator.js';
 
@@ -50,17 +52,26 @@ router.put(
 router.patch(
   '/:id/statut',
   verifyToken,
-  checkRole('ADMIN', 'OPERATEUR'),
+  checkRole('ADMIN', 'OPERATOR', 'OPERATEUR'),
   updateStatutRules,
   validateOrdre,
   updateStatut,
+);
+
+router.patch(
+  '/:id/demarrer',
+  verifyToken,
+  checkRole('ADMIN', 'OPERATOR', 'OPERATEUR'),
+  ordreIdRules,
+  validateOrdre,
+  demarrerOrdre,
 );
 
 router.delete(
   '/:id',
   verifyToken,
   checkRole('ADMIN'),
-  deleteOrdre,
+  deleteOrdreByAdmin,
 );
 
 export default router;

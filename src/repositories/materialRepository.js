@@ -31,6 +31,26 @@ export const incrementeMaterial = async (matiereId, impactStock) => {
     );
 };
 
+export const findByIds = async (ids, session = null) => {
+    return await Material.find({ _id: { $in: ids } }).session(session);
+};
+
+export const decrementerStockSiDisponible = async (matiereId, quantite, session = null) => {
+    return await Material.findOneAndUpdate(
+      { _id: matiereId, quantiteDisponible: { $gte: quantite } },
+      [
+        {
+          $set: {
+            quantiteDisponible: {
+              $round: [{ $subtract: ['$quantiteDisponible', quantite] }, 6],
+            },
+          },
+        },
+      ],
+      { new: true, session, updatePipeline: true }
+    );
+};
+
 export const findMaterialsUnderThreshold = async () => {
     return await Material.find({
       $expr: { $lte: ['$quantiteDisponible', '$seuilAlerte'] },
