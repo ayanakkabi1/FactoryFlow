@@ -3,6 +3,8 @@ import {
   updateStatutService,
   deleteOrdreService,
   startOrdreService,
+  finishOrdreService,
+  getHistoriqueOperateurService,
 } from '../src/services/orderService.js';
 import OrdreFabrication from '../src/models/OrdreFabrication.js';
 import Produit from '../src/models/Produit.js';
@@ -10,6 +12,7 @@ import User from '../src/models/User.js';
 import Material from '../src/models/Material.js';
 import CompositionItem from '../src/models/CompositionItem.js';
 import MouvementStock from '../src/models/MouvementStock.js';
+import ActionOperateur from '../src/models/ActionOperateur.js';
 import './setup.js';
 
 describe('Order service', () => {
@@ -175,5 +178,56 @@ describe('Order service', () => {
     expect(await Material.findById(material._id).then((item) => item.quantiteDisponible)).toBe(5);
     expect(await MouvementStock.countDocuments()).toBe(0);
     expect(await OrdreFabrication.findById(ordre._id).then((item) => item.statut)).toBe('PLANIFIE');
+  });
+
+  it('finalizes an order, adds finished products and records operator history', async () => {
+    const { user, product } = await buildOrderFixture();
+    const ordre = await createOrdreService({
+      code: 'OF-007',
+      produit: product._id,
+      quantiteAFabriquer: 5,
+      assigneA: user._id,
+    });
+    await startOrdreService(ordre._id, user._id);
+
+    const finalized = await finishOrdreService(ordre._id, user._id);
+
+    expect(finalized.statut).toBe('done');
+    expect(finalized.dateFin).toBeTruthy();
+    expect(await Produit.findById(product._id).then((item) => item.quantiteDisponible)).toBe(5);
+    expect(await MouvementStock.findOne({
+      ordreFabrication: ordre._id,
+      produit: product._id,
+    })).toMatchObject({
+      type: 'ENTREE',
+      quantite: 5,
+      utilisateur: user._id,
+    });
+    expect(await ActionOperateur.countDocuments({
+      ordreFabrication: ordre._id,
+      operateur: user._id,
+    })).toBe(2);
+    expect(await getHistoriqueOperateurService(user._id)).toHaveLength(2);
+  });
+
+  it('does not finalize an order twice', async () => {
+    const { user, product } = await buildOrderFixture();
+    const ordre = await createOrdreService({
+      code: 'OF-008',
+      produit: product._id,
+      quantiteAFabriquer: 1,
+      assigneA: user._id,
+    });
+    await startOrdreService(ordre._id, user._id);
+    await finishOrdreService(ordre._id, user._id);
+
+    await expect(finishOrdreService(ordre._id, user._id)).rejects.toThrow(
+      'ne peut être finalisé que depuis le statut EN_COURS'
+    );
+    expect(await Produit.findById(product._id).then((item) => item.quantiteDisponible)).toBe(1);
+    expect(await ActionOperateur.countDocuments({
+      ordreFabrication: ordre._id,
+      action: 'FINALISATION_ORDRE',
+    })).toBe(1);
   });
 });
