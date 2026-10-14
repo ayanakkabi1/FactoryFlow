@@ -1,4 +1,9 @@
-import { createOrdreService, updateStatutService, deleteOrdreService } from '../src/services/orderService.js';
+import {
+  createOrdreService,
+  updateStatutService,
+  deleteOrdreService,
+  startOrdreService,
+} from '../src/services/orderService.js';
 import OrdreFabrication from '../src/models/OrdreFabrication.js';
 import Produit from '../src/models/Produit.js';
 import User from '../src/models/User.js';
@@ -131,5 +136,44 @@ describe('Order service', () => {
     await expect(deleteOrdreService(ordre._id)).rejects.toThrow(
       'Impossible de supprimer un ordre de fabrication en cours'
     );
+  });
+
+  it('calculates needs, deducts stock and starts the order atomically', async () => {
+    const { user, material, product } = await buildOrderFixture();
+    const ordre = await createOrdreService({
+      code: 'OF-005',
+      produit: product._id,
+      quantiteAFabriquer: 5,
+      assigneA: user._id,
+    });
+
+    const started = await startOrdreService(ordre._id, user._id);
+
+    expect(started.statut).toBe('EN_COURS');
+    expect(await Material.findById(material._id).then((item) => item.quantiteDisponible)).toBe(90);
+    expect(await MouvementStock.findOne({ ordreFabrication: ordre._id })).toMatchObject({
+      type: 'SORTIE',
+      quantite: 10,
+      matiere: material._id,
+      utilisateur: user._id,
+    });
+  });
+
+  it('rolls back stock and movements when needs cannot be fulfilled', async () => {
+    const { user, material, product } = await buildOrderFixture();
+    await Material.findByIdAndUpdate(material._id, { quantiteDisponible: 5 });
+    const ordre = await createOrdreService({
+      code: 'OF-006',
+      produit: product._id,
+      quantiteAFabriquer: 5,
+      assigneA: user._id,
+    });
+
+    await expect(startOrdreService(ordre._id, user._id)).rejects.toThrow(
+      'Stock insuffisant'
+    );
+    expect(await Material.findById(material._id).then((item) => item.quantiteDisponible)).toBe(5);
+    expect(await MouvementStock.countDocuments()).toBe(0);
+    expect(await OrdreFabrication.findById(ordre._id).then((item) => item.statut)).toBe('PLANIFIE');
   });
 });
