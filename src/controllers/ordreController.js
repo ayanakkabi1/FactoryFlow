@@ -145,7 +145,7 @@ export const updateStatut = async (req, res, next) => {
   }
 };
 
-export const deleteOrdre = async (req, res, next) => {
+export const deleteOrdreByAdmin = async (req, res, next) => {
   try {
     await orderService.deleteOrdreService(req.params.id);
 
