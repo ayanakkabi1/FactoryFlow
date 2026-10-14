@@ -1,5 +1,8 @@
 import * as ordreRepository from '../repositories/ordreRepository.js';
 import * as compositionService from './compositionService.js';
+import * as materialRepository from '../repositories/materialRepository.js';
+import * as stockRepository from '../repositories/stockRepository.js';
+import mongoose from 'mongoose';
 import Produit from '../models/Produit.js';
 import User from '../models/User.js';
 import { NotFoundError, BadRequestError } from '../errors/AppError.js';
@@ -138,6 +141,75 @@ export const updateStatutService = async (id, nouveauStatut) => {
   }
 
   return ordreRepository.updateStatut(id, nouveauStatut);
+};
+
+export const startOrdreService = async (id, userId) => {
+  const ordre = await ordreRepository.findOrdreById(id);
+  if (!ordre) {
+    throw new NotFoundError('Ordre de fabrication introuvable');
+  }
+  if (ordre.statut !== 'PLANIFIE') {
+    throw new BadRequestError(
+      `Un ordre de fabrication ne peut être démarré que depuis le statut PLANIFIE (statut actuel : ${ordre.statut})`
+    );
+  }
+
+  const besoins = new Map();
+  for (const item of ordre.composition) {
+    if (!item.matiere) {
+      throw new BadRequestError(
+        `La matière "${item.nomMatiere}" n'est pas identifiée dans le snapshot de l'ordre`
+      );
+    }
+    const quantite = item.quantiteUnitaireNecessaire * ordre.quantiteAFabriquer;
+    besoins.set(
+      item.matiere.toString(),
+      (besoins.get(item.matiere.toString()) || 0) + quantite
+    );
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    let ordreDemarre;
+    await session.withTransaction(async () => {
+      for (const [matiereId, quantite] of besoins) {
+        const matiere = await materialRepository.decrementMaterialIfAvailable(
+          matiereId,
+          quantite,
+          { session }
+        );
+        if (!matiere) {
+          throw new BadRequestError(
+            `Stock insuffisant pour la matière nécessaire à l'ordre de fabrication`
+          );
+        }
+
+        const mouvement = await stockRepository.createMouvement(
+          {
+            type: 'SORTIE',
+            matiere: matiereId,
+            quantite,
+            utilisateur: userId,
+            ordreFabrication: id,
+            motif: `Démarrage de l'ordre de fabrication ${ordre.code}`,
+          },
+          { session }
+        );
+        await ordreRepository.addMouvementStock(id, mouvement._id, { session });
+      }
+
+      ordreDemarre = await ordreRepository.startOrdre(id, { session });
+      if (!ordreDemarre) {
+        throw new BadRequestError(
+          "L'ordre de fabrication a déjà été démarré ou n'est plus planifié"
+        );
+      }
+    });
+
+    return ordreDemarre;
+  } finally {
+    await session.endSession();
+  }
 };
 
 export const deleteOrdreService = async (id) => {

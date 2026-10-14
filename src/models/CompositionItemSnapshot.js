@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 
 const compositionItemSnapshotSchema = new mongoose.Schema(
   {
+    matiere: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Material',
+      required: [true, 'La matière première est obligatoire'],
+    },
     nomMatiere: {
       type: String,
       required: [true, 'Le nom de la matière première est obligatoire'],
