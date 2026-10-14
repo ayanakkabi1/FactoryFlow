@@ -23,12 +23,27 @@ export const updateMaterial = async(id, data) => {
     return await Material.findByIdAndUpdate(id, data, { new: true, runValidators: true })
 }
 
-export const incrementeMaterial = async (matiereId, impactStock) => {
+export const incrementeMaterial = async (matiereId, impactStock, options = {}) => {
     return await Material.findByIdAndUpdate(
       matiereId,
       { $inc: { quantiteDisponible: impactStock } },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, ...options }
     );
+};
+
+export const decrementMaterialIfAvailable = async (
+  matiereId,
+  quantite,
+  options = {}
+) => {
+  return Material.findOneAndUpdate(
+    {
+      _id: matiereId,
+      quantiteDisponible: { $gte: quantite },
+    },
+    { $inc: { quantiteDisponible: -quantite } },
+    { new: true, runValidators: true, ...options }
+  );
 };
 
 export const findMaterialsUnderThreshold = async () => {
