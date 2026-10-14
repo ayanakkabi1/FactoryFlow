@@ -122,6 +122,7 @@ export const generateCompositionSnapshotDocuments = async (produitId) => {
   }
 
   return items.map((item) => new CompositionItemSnapshot({
+    matiere: item.matiere?._id,
     nomMatiere: item.matiere?.name || item.matiere?.nom,
     uniteMesure: item.matiere?.uniteMesure,
     quantiteUnitaireNecessaire: item.quantiteNecessaire,
@@ -150,6 +151,7 @@ export const getCompositionSnapshot = async (produitId, quantiteAFabriquer = 1) 
     const quantiteUnitaireNecessaire = item.quantiteNecessaire;
 
     const snap = new CompositionItemSnapshot({
+      matiere: item.matiere?._id,
       nomMatiere,
       uniteMesure,
       quantiteUnitaireNecessaire,
@@ -173,4 +175,3 @@ export const getCompositionSnapshot = async (produitId, quantiteAFabriquer = 1) 
     composition: snapshots,
   };
 };
-
