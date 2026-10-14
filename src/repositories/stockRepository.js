@@ -1,7 +1,8 @@
 import MouvementStock from "../models/MouvementStock.js";
 
-export const createMouvement = async(data)=>{
-    return await MouvementStock.create(data);
+export const createMouvement = async(data, options = {})=>{
+    const [mouvement] = await MouvementStock.create([data], options);
+    return mouvement;
 }
 
 export const updateMouvement = async(id,data)=> {
