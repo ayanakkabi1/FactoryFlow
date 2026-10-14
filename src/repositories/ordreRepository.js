@@ -45,7 +45,7 @@ export const updateOrdre = async (id, data) => {
   );
 };
 
-export const updateStatut = async (id, statut) => {
+export const updateStatut = async (id, statut, options = {}) => {
   const updateFields = { statut };
 
   if (statut === 'EN_COURS') {
@@ -60,16 +60,27 @@ export const updateStatut = async (id, statut) => {
     OrdreFabrication.findByIdAndUpdate(id, updateFields, {
       new: true,
       runValidators: true,
+      ...options,
     })
   );
 };
 
-export const addMouvementStock = async (ordreId, mouvementId) => {
+export const startOrdre = async (id, options = {}) => {
+  return populateOrdre(
+    OrdreFabrication.findOneAndUpdate(
+      { _id: id, statut: 'PLANIFIE' },
+      { statut: 'EN_COURS', dateDemarrage: new Date() },
+      { new: true, runValidators: true, ...options }
+    )
+  );
+};
+
+export const addMouvementStock = async (ordreId, mouvementId, options = {}) => {
   return populateOrdre(
     OrdreFabrication.findByIdAndUpdate(
       ordreId,
       { $addToSet: { mouvementsStock: mouvementId } },
-      { new: true }
+      { new: true, ...options }
     )
   );
 };
@@ -77,4 +88,3 @@ export const addMouvementStock = async (ordreId, mouvementId) => {
 export const deleteOrdre = async (id) => {
   return OrdreFabrication.findByIdAndDelete(id);
 };
-
