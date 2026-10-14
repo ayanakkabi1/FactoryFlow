@@ -23,6 +23,12 @@ const produitSchema = new mongoose.Schema(
       type: Number,
       min: [0, 'Le prix ne peut pas être négatif'],
     },
+    quantiteDisponible: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: [0, 'La quantité disponible ne peut pas être négative'],
+    },
     composition: [
       {
         type: mongoose.Schema.Types.ObjectId,

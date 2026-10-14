@@ -52,7 +52,7 @@ export const updateStatut = async (id, statut, options = {}) => {
     updateFields.dateDemarrage = new Date();
   }
 
-  if (statut === 'TERMINE' || statut === 'ANNULE') {
+  if (statut === 'TERMINE' || statut === 'done' || statut === 'ANNULE') {
     updateFields.dateFin = new Date();
   }
 
@@ -70,6 +70,16 @@ export const startOrdre = async (id, options = {}) => {
     OrdreFabrication.findOneAndUpdate(
       { _id: id, statut: 'PLANIFIE' },
       { statut: 'EN_COURS', dateDemarrage: new Date() },
+      { new: true, runValidators: true, ...options }
+    )
+  );
+};
+
+export const finishOrdre = async (id, options = {}) => {
+  return populateOrdre(
+    OrdreFabrication.findOneAndUpdate(
+      { _id: id, statut: 'EN_COURS' },
+      { statut: 'done', dateFin: new Date() },
       { new: true, runValidators: true, ...options }
     )
   );

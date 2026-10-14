@@ -2,6 +2,7 @@ import * as ordreRepository from '../repositories/ordreRepository.js';
 import * as compositionService from './compositionService.js';
 import * as materialRepository from '../repositories/materialRepository.js';
 import * as stockRepository from '../repositories/stockRepository.js';
+import * as actionOperateurRepository from '../repositories/actionOperateurRepository.js';
 import mongoose from 'mongoose';
 import Produit from '../models/Produit.js';
 import User from '../models/User.js';
@@ -11,6 +12,7 @@ const TRANSITIONS_VALIDES = {
   PLANIFIE: ['EN_COURS', 'ANNULE'],
   EN_COURS: ['TERMINE', 'ANNULE'],
   TERMINE: [],
+  done: [],
   ANNULE: [],
 };
 
@@ -204,12 +206,91 @@ export const startOrdreService = async (id, userId) => {
           "L'ordre de fabrication a déjà été démarré ou n'est plus planifié"
         );
       }
+
+      await actionOperateurRepository.createAction(
+        {
+          operateur: userId,
+          ordreFabrication: id,
+          action: 'DEMARRAGE_ORDRE',
+          details: { quantitesMatieres: Object.fromEntries(besoins) },
+        },
+        { session }
+      );
     });
 
     return ordreDemarre;
   } finally {
     await session.endSession();
   }
+};
+
+export const finishOrdreService = async (id, userId) => {
+  const ordre = await ordreRepository.findOrdreById(id);
+  if (!ordre) {
+    throw new NotFoundError('Ordre de fabrication introuvable');
+  }
+  if (ordre.statut !== 'EN_COURS') {
+    throw new BadRequestError(
+      `Un ordre de fabrication ne peut être finalisé que depuis le statut EN_COURS (statut actuel : ${ordre.statut})`
+    );
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    let ordreFinalise;
+    await session.withTransaction(async () => {
+      const produit = await Produit.findOneAndUpdate(
+        { _id: ordre.produit._id || ordre.produit },
+        { $inc: { quantiteDisponible: ordre.quantiteAFabriquer } },
+        { new: true, runValidators: true, session }
+      );
+
+      if (!produit) {
+        throw new NotFoundError('Produit introuvable');
+      }
+
+      const mouvement = await stockRepository.createMouvement(
+        {
+          type: 'ENTREE',
+          produit: produit._id,
+          quantite: ordre.quantiteAFabriquer,
+          utilisateur: userId,
+          ordreFabrication: id,
+          motif: `Finalisation de l'ordre de fabrication ${ordre.code}`,
+        },
+        { session }
+      );
+      await ordreRepository.addMouvementStock(id, mouvement._id, { session });
+
+      ordreFinalise = await ordreRepository.finishOrdre(id, { session });
+      if (!ordreFinalise) {
+        throw new BadRequestError(
+          "L'ordre de fabrication a déjà été finalisé ou n'est plus en cours"
+        );
+      }
+
+      await actionOperateurRepository.createAction(
+        {
+          operateur: userId,
+          ordreFabrication: id,
+          action: 'FINALISATION_ORDRE',
+          details: {
+            quantiteProduite: ordre.quantiteAFabriquer,
+            produit: produit._id,
+          },
+        },
+        { session }
+      );
+    });
+
+    return ordreFinalise;
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const getHistoriqueOperateurService = async (userId) => {
+  return actionOperateurRepository.findByOperateur(userId);
 };
 
 export const deleteOrdreService = async (id) => {

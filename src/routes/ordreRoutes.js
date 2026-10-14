@@ -9,6 +9,8 @@ import {
   updateOrdre,
   updateStatut,
   startOrdre,
+  finishOrdre,
+  getHistoriqueOperateur,
   deleteOrdreByAdmin,
 } from '../controllers/ordreController.js';
 import { verifyToken, checkRole } from '../middlewares/authMiddleware.js';
@@ -22,6 +24,12 @@ import {
 const router = express.Router();
 
 router.get('/mes-ordres', verifyToken, getMesOrdres);
+router.get(
+  '/historique',
+  verifyToken,
+  checkRole('ADMIN', 'OPERATEUR', 'OPERATOR'),
+  getHistoriqueOperateur,
+);
 
 router.get('/statut/:statut', verifyToken, getOrdresByStatut);
 
@@ -62,6 +70,13 @@ router.patch(
   verifyToken,
   checkRole('ADMIN', 'OPERATEUR', 'OPERATOR'),
   startOrdre,
+);
+
+router.patch(
+  '/:id/finaliser',
+  verifyToken,
+  checkRole('ADMIN', 'OPERATEUR', 'OPERATOR'),
+  finishOrdre,
 );
 
 router.delete(

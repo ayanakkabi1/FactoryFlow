@@ -22,7 +22,7 @@ const ordreFabricationSchema = new mongoose.Schema(
     },
     statut: {
       type: String,
-      enum: ['PLANIFIE', 'EN_COURS', 'TERMINE', 'ANNULE'],
+      enum: ['PLANIFIE', 'EN_COURS', 'TERMINE', 'done', 'ANNULE'],
       default: 'PLANIFIE',
     },
     dateCreation: {

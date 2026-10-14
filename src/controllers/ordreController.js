@@ -162,6 +162,39 @@ export const startOrdre = async (req, res, next) => {
   }
 };
 
+export const finishOrdre = async (req, res, next) => {
+  try {
+    const ordre = await orderService.finishOrdreService(
+      req.params.id,
+      req.user.userId || req.user._id
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Ordre de fabrication finalisé avec succès',
+      data: ordre,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getHistoriqueOperateur = async (req, res, next) => {
+  try {
+    const historique = await orderService.getHistoriqueOperateurService(
+      req.user.userId || req.user._id
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: historique.length,
+      data: historique,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const deleteOrdreByAdmin = async (req, res, next) => {
   try {
     await orderService.deleteOrdreService(req.params.id);

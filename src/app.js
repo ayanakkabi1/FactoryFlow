@@ -8,6 +8,8 @@ import stockRoute from './routes/stockRoutes.js';
 import produitRoute from './routes/produitRoute.js';
 import compositionRoute from './routes/compositionRoutes.js';
 import ordreRoute from './routes/ordreRoutes.js';
+import AppError from './errors/AppError.js';
+import { globalErrorHandler } from './middlewares/error.middleware.js';
 
 const app = express();
 
@@ -33,5 +35,11 @@ app.use((error, req, res, next) => {
     message: error.message || 'Une erreur interne est survenue.',
   });
 });
+
+app.all('*', (req, res, next) => {
+    next(new AppError(`Impossible de trouver la route ${req.originalUrl} sur ce serveur.`, 404));
+});
+
+app.use(globalErrorHandler);
 
 export default app;

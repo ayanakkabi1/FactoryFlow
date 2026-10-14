@@ -22,7 +22,16 @@ const mouvementStockSchema = new mongoose.Schema(
     matiere: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Material',
-      required: [true, 'La matière première est obligatoire'],
+      required: function () {
+        return !this.produit;
+      },
+    },
+    produit: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Produit',
+      required: function () {
+        return !this.matiere;
+      },
     },
     utilisateur: {
       type: mongoose.Schema.Types.ObjectId,
