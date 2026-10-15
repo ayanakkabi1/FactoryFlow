@@ -12,6 +12,7 @@ import {
   finishOrdre,
   getHistoriqueOperateur,
   deleteOrdreByAdmin,
+  getOrders,
 } from '../controllers/ordreController.js';
 import { verifyToken, checkRole } from '../middlewares/authMiddleware.js';
 import {
@@ -86,4 +87,5 @@ router.delete(
   deleteOrdreByAdmin,
 );
 
+router.get('/', verifyToken,checkRole(['Admin']), getOrders);
 export default router;

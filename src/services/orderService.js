@@ -308,3 +308,37 @@ export const deleteOrdreService = async (id) => {
   await ordreRepository.deleteOrdre(id);
   return ordre;
 };
+
+export const getFilteredOrderService = async(query)=>{
+  const { status, startDate, endDate, page = 1, limit = 10 } = query;
+  const filter ={};
+  if(status){
+    filter.status = status;
+  }
+  if (startDate || endDate) {
+    filter.createdAt = {};
+    if (startDate) {
+      filter.createdAt.$gte = new Date(startDate);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = end;
+    }
+  }
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+  const skip = (pageNum - 1) * limitNum;
+
+  const [orders, total] = await Promise.all([
+    ordreRepository.findOrders(filter, skip, limitNum),
+    ordreRepository.countOrders(filter)
+  ]);
+  return {
+    orders,
+    total,
+    totalPages: Math.ceil(total / limitNum),
+    currentPage: pageNum
+  }
+
+}

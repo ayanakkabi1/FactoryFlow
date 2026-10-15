@@ -98,3 +98,15 @@ export const addMouvementStock = async (ordreId, mouvementId, options = {}) => {
 export const deleteOrdre = async (id) => {
   return OrdreFabrication.findByIdAndDelete(id);
 };
+
+export const findorder = async (filter, skip, limitNum)=>{
+    return await OrdreFabrication.find(filter)
+    .populate('product', 'name reference')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limitNum);
+}
+
+export const countOrders = async (filter) => {
+  return await OrdreFabrication.countDocuments(filter);
+}

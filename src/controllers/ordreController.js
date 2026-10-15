@@ -207,3 +207,20 @@ export const deleteOrdreByAdmin = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const getOrders = async (req, res, next) => {
+  try {
+    const result = await orderService.getFilteredOrdersService(req.query);
+
+    res.status(200).json({
+      success: true,
+      count: result.orders.length,
+      total: result.total,
+      totalPages: result.totalPages,
+      currentPage: result.currentPage,
+      data: result.orders
+    });
+  } catch (error) {
+    next(error);
+  }
+};
