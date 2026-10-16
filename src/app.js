@@ -10,6 +10,8 @@ import compositionRoute from './routes/compositionRoutes.js';
 import ordreRoute from './routes/ordreRoutes.js';
 import AppError from './errors/AppError.js';
 import { globalErrorHandler } from './middlewares/error.middleware.js';
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from './config/swagger.js';
 
 const app = express();
 
@@ -27,6 +29,8 @@ app.get('/', (req, res) => {
   res.send('FactoryFlow API is running');
 });
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 app.use((error, req, res, next) => {
   const statusCode = error.statusCode || 500;
 
@@ -36,8 +40,8 @@ app.use((error, req, res, next) => {
   });
 });
 
-app.all('*', (req, res, next) => {
-    next(new AppError(`Impossible de trouver la route ${req.originalUrl} sur ce serveur.`, 404));
+app.use((req, res, next) => {
+  next(new AppError(`Impossible de trouver la route ${req.originalUrl} sur ce serveur.`, 404));
 });
 
 app.use(globalErrorHandler);
