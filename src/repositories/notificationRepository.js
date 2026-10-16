@@ -1,6 +1,10 @@
 import Notification from '../models/Notification.js';
 
-export const createNotification = async (data) => {
+export const createNotification = async (data, options = {}) => {
+  if (options.session) {
+    const [notification] = await Notification.create([data], options);
+    return notification;
+  }
   return await Notification.create(data);
 };
 
