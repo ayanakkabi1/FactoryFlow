@@ -112,16 +112,16 @@ describe('Order service', () => {
       assigneA: user._id,
     });
 
-    const started = await updateStatutService(ordre._id, 'EN_COURS');
+    const started = await startOrdreService(ordre._id, user._id, 'ADMIN');
     expect(started.statut).toBe('EN_COURS');
     expect(started.dateDemarrage).toBeTruthy();
 
-    const finished = await updateStatutService(started._id, 'TERMINE');
+    const finished = await finishOrdreService(started._id, user._id, 'ADMIN');
     expect(finished.statut).toBe('TERMINE');
     expect(finished.dateFin).toBeTruthy();
 
     await expect(updateStatutService(finished._id, 'EN_COURS')).rejects.toThrow(
-      'Transition de statut invalide : TERMINE → EN_COURS'
+      'Use the dedicated start and finish endpoints'
     );
   });
 
@@ -134,7 +134,7 @@ describe('Order service', () => {
       assigneA: user._id,
     });
 
-    await updateStatutService(ordre._id, 'EN_COURS');
+    await startOrdreService(ordre._id, user._id, 'ADMIN');
 
     await expect(deleteOrdreService(ordre._id)).rejects.toThrow(
       'Impossible de supprimer un ordre de fabrication en cours'
@@ -192,7 +192,7 @@ describe('Order service', () => {
 
     const finalized = await finishOrdreService(ordre._id, user._id);
 
-    expect(finalized.statut).toBe('done');
+    expect(finalized.statut).toBe('TERMINE');
     expect(finalized.dateFin).toBeTruthy();
     expect(await Produit.findById(product._id).then((item) => item.quantiteDisponible)).toBe(5);
     expect(await MouvementStock.findOne({
