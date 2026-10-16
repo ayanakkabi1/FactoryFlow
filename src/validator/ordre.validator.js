@@ -1,4 +1,4 @@
-import { body, param, validationResult } from 'express-validator';
+import { body, validationResult } from 'express-validator';
 
 // ─── Validation middleware ───────────────────────────────────────────
 export const validateOrdre = (req, res, next) => {
@@ -61,7 +61,7 @@ export const updateStatutRules = [
   body('statut')
     .notEmpty()
     .withMessage('Le statut est obligatoire.')
-    .isIn(['PLANIFIE', 'EN_COURS', 'TERMINE', 'ANNULE'])
-    .withMessage('Le statut doit être : PLANIFIE, EN_COURS, TERMINE ou ANNULE.'),
+    .isIn(['ANNULE'])
+    .withMessage('Cette route permet uniquement d’annuler un ordre planifié.'),
 ];
 

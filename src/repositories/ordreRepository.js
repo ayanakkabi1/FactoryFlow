@@ -46,22 +46,16 @@ export const updateOrdre = async (id, data) => {
 };
 
 export const updateStatut = async (id, statut, options = {}) => {
-  const updateFields = { statut };
-
-  if (statut === 'EN_COURS') {
-    updateFields.dateDemarrage = new Date();
-  }
-
-  if (statut === 'TERMINE' || statut === 'done' || statut === 'ANNULE') {
-    updateFields.dateFin = new Date();
-  }
-
   return populateOrdre(
-    OrdreFabrication.findByIdAndUpdate(id, updateFields, {
+    OrdreFabrication.findOneAndUpdate(
+      { _id: id, statut: 'PLANIFIE' },
+      { statut, dateFin: new Date() },
+      {
       new: true,
       runValidators: true,
       ...options,
-    })
+      }
+    )
   );
 };
 
@@ -79,7 +73,7 @@ export const finishOrdre = async (id, options = {}) => {
   return populateOrdre(
     OrdreFabrication.findOneAndUpdate(
       { _id: id, statut: 'EN_COURS' },
-      { statut: 'done', dateFin: new Date() },
+      { statut: 'TERMINE', dateFin: new Date() },
       { new: true, runValidators: true, ...options }
     )
   );
@@ -99,13 +93,13 @@ export const deleteOrdre = async (id) => {
   return OrdreFabrication.findByIdAndDelete(id);
 };
 
-export const findorder = async (filter, skip, limitNum)=>{
-    return await OrdreFabrication.find(filter)
-    .populate('product', 'name reference')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limitNum);
-}
+export const findOrders = async (filter, skip, limit) =>
+  populateOrdre(
+    OrdreFabrication.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+  );
 
 export const countOrders = async (filter) => {
   return await OrdreFabrication.countDocuments(filter);

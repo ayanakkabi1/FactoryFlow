@@ -1,7 +1,6 @@
 import express from 'express';
 import {
   createOrdre,
-  getAllOrdres,
   getOrdreById,
   getOrdreByCode,
   getOrdresByStatut,
@@ -94,6 +93,28 @@ const router = express.Router();
  *         schema:
  *           type: string
  *         description: MongoDB user ID.
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 10
  *     responses:
  *       200:
  *         description: Manufacturing orders and count.
@@ -215,7 +236,7 @@ router.get('/statut/:statut', verifyToken, getOrdresByStatut);
 
 router.get('/code/:code', verifyToken, getOrdreByCode);
 
-router.get('/', verifyToken, getAllOrdres);
+router.get('/', verifyToken, checkRole('ADMIN'), getOrders);
 router.get('/:id', verifyToken, getOrdreById);
 
 router.post(
@@ -239,7 +260,7 @@ router.put(
 router.patch(
   '/:id/statut',
   verifyToken,
-  checkRole('ADMIN', 'OPERATEUR'),
+  checkRole('ADMIN'),
   updateStatutRules,
   validateOrdre,
   updateStatut,
@@ -266,5 +287,4 @@ router.delete(
   deleteOrdreByAdmin,
 );
 
-router.get('/', verifyToken,checkRole(['Admin']), getOrders);
 export default router;

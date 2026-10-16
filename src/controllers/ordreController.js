@@ -6,7 +6,7 @@ import * as orderService from '../services/orderService.js';
  *   get:
  *     tags: [Orders]
  *     summary: List manufacturing orders
- *     description: Supports statut, produit and assigneA query filters.
+ *     description: Supports statut, produit, assigneA, creation date range and pagination filters. ADMIN only.
  *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - in: query
@@ -24,6 +24,29 @@ import * as orderService from '../services/orderService.js';
  *         schema:
  *           type: string
  *         description: MongoDB user ID.
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
  *     responses:
  *       200:
  *         description: Manufacturing orders and count.
@@ -128,8 +151,8 @@ import * as orderService from '../services/orderService.js';
  * /api/ordres/{id}/statut:
  *   patch:
  *     tags: [Orders]
- *     summary: Change an order status
- *     description: Requires ADMIN or OPERATEUR role.
+ *     summary: Cancel a planned order
+ *     description: Only ADMIN can cancel an order while its status is PLANIFIE.
  *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - in: path
@@ -207,32 +230,6 @@ export const createOrdre = async (req, res, next) => {
   }
 };
 
-export const getAllOrdres = async (req, res, next) => {
-  try {
-    const filter = {};
-
-    if (req.query.statut) {
-      filter.statut = req.query.statut.toUpperCase();
-    }
-    if (req.query.produit) {
-      filter.produit = req.query.produit;
-    }
-    if (req.query.assigneA) {
-      filter.assigneA = req.query.assigneA;
-    }
-
-    const ordres = await orderService.getAllOrdresService(filter);
-
-    return res.status(200).json({
-      success: true,
-      count: ordres.length,
-      data: ordres,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
 export const getOrdreById = async (req, res, next) => {
   try {
     const ordre = await orderService.getOrdreByIdService(req.params.id);
@@ -278,7 +275,7 @@ export const getOrdresByStatut = async (req, res, next) => {
 
 export const getMesOrdres = async (req, res, next) => {
   try {
-    const ordres = await orderService.getOrdresByAssigneService(req.user._id);
+    const ordres = await orderService.getOrdresByAssigneService(req.user.userId);
 
     return res.status(200).json({
       success: true,
@@ -328,7 +325,8 @@ export const startOrdre = async (req, res, next) => {
   try {
     const ordre = await orderService.startOrdreService(
       req.params.id,
-      req.user.userId || req.user._id
+      req.user.userId,
+      req.user.role
     );
 
     return res.status(200).json({
@@ -345,7 +343,8 @@ export const finishOrdre = async (req, res, next) => {
   try {
     const ordre = await orderService.finishOrdreService(
       req.params.id,
-      req.user.userId || req.user._id
+      req.user.userId,
+      req.user.role
     );
 
     return res.status(200).json({

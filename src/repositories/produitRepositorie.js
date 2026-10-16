@@ -32,3 +32,10 @@ export const updateProduct = async (id, updateData) => {
 export const deleteProduct = async (id) => {
   return Produit.findByIdAndDelete(id);
 };
+
+export const incrementProductStock = (id, quantity, options = {}) =>
+  Produit.findByIdAndUpdate(
+    id,
+    { $inc: { quantiteDisponible: quantity } },
+    { new: true, runValidators: true, ...options }
+  );

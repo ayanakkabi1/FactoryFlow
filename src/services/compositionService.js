@@ -1,8 +1,6 @@
 import * as compositionRepository from '../repositories/compositionRepository.js';
-import CompositionItem from '../models/CompositionItem.js';
-import CompositionItemSnapshot from '../models/CompositionItemSnapshot.js';
-import Produit from '../models/Produit.js';
-import Material from '../models/Material.js';
+import * as produitRepository from '../repositories/produitRepositorie.js';
+import * as materialRepository from '../repositories/materialRepository.js';
 
 const createHttpError = (message, statusCode = 400) => {
   const error = new Error(message);
@@ -11,12 +9,12 @@ const createHttpError = (message, statusCode = 400) => {
 };
 
 export const createCompositionItem = async ({ produit, matiere, quantiteNecessaire }) => {
-  const produitExists = await Produit.findById(produit);
+  const produitExists = await produitRepository.findProductById(produit);
   if (!produitExists) {
     throw createHttpError('Produit introuvable', 404);
   }
 
-  const matiereExists = await Material.findById(matiere);
+  const matiereExists = await materialRepository.findById(matiere);
   if (!matiereExists) {
     throw createHttpError('Matière première introuvable', 404);
   }
@@ -55,7 +53,7 @@ export const getCompositionItemById = async (id) => {
 };
 
 export const getCompositionByProductId = async (produitId) => {
-  const produitExists = await Produit.findById(produitId);
+  const produitExists = await produitRepository.findProductById(produitId);
   if (!produitExists) {
     throw createHttpError('Produit introuvable', 404);
   }
@@ -64,7 +62,7 @@ export const getCompositionByProductId = async (produitId) => {
 };
 
 export const updateCompositionItem = async (id, updateData) => {
-  const existing = await CompositionItem.findById(id);
+  const existing = await compositionRepository.findCompositionItemRawById(id);
   if (!existing) {
     throw createHttpError('Élément de composition introuvable', 404);
   }
@@ -72,7 +70,7 @@ export const updateCompositionItem = async (id, updateData) => {
   const payload = {};
 
   if (updateData.matiere && updateData.matiere.toString() !== existing.matiere.toString()) {
-    const matiereExists = await Material.findById(updateData.matiere);
+    const matiereExists = await materialRepository.findById(updateData.matiere);
     if (!matiereExists) {
       throw createHttpError('Matière première introuvable', 404);
     }
@@ -99,7 +97,7 @@ export const updateCompositionItem = async (id, updateData) => {
 };
 
 export const deleteCompositionItem = async (id) => {
-  const item = await CompositionItem.findById(id);
+  const item = await compositionRepository.findCompositionItemRawById(id);
   if (!item) {
     throw createHttpError('Élément de composition introuvable', 404);
   }
@@ -111,7 +109,7 @@ export const deleteCompositionItem = async (id) => {
 };
 
 export const generateCompositionSnapshotDocuments = async (produitId) => {
-  const produit = await Produit.findById(produitId);
+  const produit = await produitRepository.findProductById(produitId);
   if (!produit) {
     throw createHttpError('Produit introuvable', 404);
   }
@@ -121,7 +119,7 @@ export const generateCompositionSnapshotDocuments = async (produitId) => {
     throw createHttpError("Le produit n'a aucune composition définie pour générer un snapshot", 400);
   }
 
-  return items.map((item) => new CompositionItemSnapshot({
+  return items.map((item) => ({
     matiere: item.matiere?._id,
     nomMatiere: item.matiere?.name || item.matiere?.nom,
     uniteMesure: item.matiere?.uniteMesure,
@@ -130,7 +128,7 @@ export const generateCompositionSnapshotDocuments = async (produitId) => {
 };
 
 export const getCompositionSnapshot = async (produitId, quantiteAFabriquer = 1) => {
-  const produit = await Produit.findById(produitId);
+  const produit = await produitRepository.findProductById(produitId);
   if (!produit) {
     throw createHttpError('Produit introuvable', 404);
   }
@@ -150,18 +148,11 @@ export const getCompositionSnapshot = async (produitId, quantiteAFabriquer = 1) 
     const uniteMesure = item.matiere?.uniteMesure;
     const quantiteUnitaireNecessaire = item.quantiteNecessaire;
 
-    const snap = new CompositionItemSnapshot({
-      matiere: item.matiere?._id,
-      nomMatiere,
-      uniteMesure,
-      quantiteUnitaireNecessaire,
-    });
-
     return {
       nomMatiere,
       uniteMesure,
       quantiteUnitaireNecessaire,
-      besoinsTotaux: snap.calculerBesoinsTotaux(quantiteNum),
+      besoinsTotaux: quantiteUnitaireNecessaire * quantiteNum,
     };
   });
 

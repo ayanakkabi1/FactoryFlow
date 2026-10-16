@@ -4,8 +4,8 @@ export const findAll = async() => {
     return await Material.find();
 }
 
-export const findById = async(id) => {
-    return await Material.findById(id);
+export const findById = async (id, options = {}) => {
+    return await Material.findById(id).session(options.session || null);
 }
 
 export const findByRef = async(reference) => {

@@ -17,6 +17,8 @@ export const findCompositionItemById = async (id) => {
     .populate('produit');
 };
 
+export const findCompositionItemRawById = (id) => CompositionItem.findById(id);
+
 export const findCompositionByProductId = async (produitId) => {
   return CompositionItem.find({ produit: produitId }).populate('matiere');
 };

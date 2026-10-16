@@ -111,10 +111,18 @@ Le token s'utilise ensuite dans l'en-tête `Authorization: Bearer <token>`.
 
 ## Scripts npm
 
+Le seed optionnel se lance avec `npm run seed`. Renseignez d'abord
+`SEED_ADMIN_PASSWORD` et `SEED_OPERATOR_PASSWORD` dans `.env`. Il crée les comptes
+`admin@factoryflow.test` et `operator@factoryflow.test`, deux matières, un produit
+avec sa composition et l'ordre planifié `DEMO-OF-001`. Le script peut être relancé
+sans dupliquer les données et refuse de s'exécuter lorsque `NODE_ENV=production`.
+Avec Docker Compose : `docker compose exec api npm run seed`.
+
 | Commande               | Rôle                                       |
 | ---------------------- | ------------------------------------------ |
 | `npm start`            | Lance le serveur (`node src/server.js`)    |
 | `npm run dev`          | Lance le serveur avec nodemon              |
+| `npm run seed`         | Crée les données de démonstration (hors production) |
 | `npm test`             | Exécute la suite de tests Jest             |
 | `npm run lint`         | Analyse ESLint                             |
 | `npm run lint:fix`     | Corrige automatiquement les erreurs ESLint |
@@ -201,6 +209,7 @@ Toutes les routes sont préfixées par `/api`. « Authentifié » = token requis
 | Méthode | Route         | Accès                      | Description                               |
 | ------- | ------------- | -------------------------- | ----------------------------------------- |
 | GET     | `/alertes`    | ADMIN, OPERATOR, OPERATEUR | Matières sous leur seuil d'alerte         |
+| GET     | `/mouvements` | ADMIN                      | Consulter l'historique des mouvements      |
 | POST    | `/mouvements` | ADMIN, OPERATOR, OPERATEUR | Enregistre un mouvement `ENTREE`/`SORTIE` |
 
 Une sortie qui fait passer une matière sous son seuil d'alerte génère une notification `ALERTE_STOCK` (niveau `CRITIQUE`, ou `RUPTURE` si la quantité atteint 0).
@@ -233,7 +242,7 @@ Une sortie qui fait passer une matière sous son seuil d'alerte génère une not
 
 | Méthode | Route             | Accès                      | Description                                    |
 | ------- | ----------------- | -------------------------- | ---------------------------------------------- |
-| GET     | `/`               | Authentifié                | Liste des OF                                   |
+| GET     | `/`               | ADMIN                      | Liste des OF avec filtres, dates et pagination |
 | GET     | `/:id`            | Authentifié                | Détail d'un OF                                 |
 | GET     | `/code/:code`     | Authentifié                | OF par code                                    |
 | GET     | `/statut/:statut` | Authentifié                | OF par statut                                  |
@@ -241,7 +250,7 @@ Une sortie qui fait passer une matière sous son seuil d'alerte génère une not
 | GET     | `/historique`     | ADMIN, OPERATEUR, OPERATOR | Historique des actions de l'opérateur          |
 | POST    | `/`               | ADMIN                      | Crée un OF                                     |
 | PUT     | `/:id`            | ADMIN                      | Modifie un OF (uniquement s'il est `PLANIFIE`) |
-| PATCH   | `/:id/statut`     | ADMIN, OPERATEUR           | Change le statut (transitions contrôlées)      |
+| PATCH   | `/:id/statut`     | ADMIN                      | Annule un OF encore `PLANIFIE`                 |
 | PATCH   | `/:id/demarrer`   | ADMIN, OPERATEUR, OPERATOR | Démarre l'OF et déduit le stock                |
 | PATCH   | `/:id/finaliser`  | ADMIN, OPERATEUR, OPERATOR | Finalise l'OF et incrémente le stock produit   |
 | DELETE  | `/:id`            | ADMIN                      | Supprime un OF (interdit s'il est `EN_COURS`)  |
@@ -250,13 +259,14 @@ Une sortie qui fait passer une matière sous son seuil d'alerte génère une not
 
 ```
 PLANIFIE ──► EN_COURS ──► TERMINE
-    │            │
-    └──► ANNULE ◄┘
+    │
+    └──────────► ANNULE
 ```
 
 - **Création** : l'OF est créé au statut `PLANIFIE` avec un snapshot de la composition du produit.
 - **Démarrage** (`/demarrer`) : uniquement depuis `PLANIFIE`. Les matières nécessaires (quantité unitaire × quantité à fabriquer) sont déduites du stock dans **une transaction MongoDB** ; les mouvements de sortie et l'action `DEMARRAGE_ORDRE` sont enregistrés.
-- **Finalisation** (`/finaliser`) : uniquement depuis `EN_COURS`. La quantité fabriquée est ajoutée au stock du produit et l'action `FINALISATION_ORDRE` est enregistrée.
+- **Annulation** (`/:id/statut`) : réservée à ADMIN et possible uniquement depuis `PLANIFIE`.
+- **Finalisation** (`/finaliser`) : uniquement depuis `EN_COURS`. La quantité fabriquée est ajoutée au stock du produit et l'action `FINALISATION_ORDRE` est enregistrée ; le statut devient `TERMINE`.
 
 ## Tests
 

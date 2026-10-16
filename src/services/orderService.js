@@ -3,16 +3,15 @@ import * as compositionService from './compositionService.js';
 import * as materialRepository from '../repositories/materialRepository.js';
 import * as stockRepository from '../repositories/stockRepository.js';
 import * as actionOperateurRepository from '../repositories/actionOperateurRepository.js';
+import * as produitRepository from '../repositories/produitRepositorie.js';
+import * as userRepository from '../repositories/userRepository.js';
 import mongoose from 'mongoose';
-import Produit from '../models/Produit.js';
-import User from '../models/User.js';
-import { NotFoundError, BadRequestError } from '../errors/AppError.js';
+import { NotFoundError, BadRequestError, ForbiddenError } from '../errors/AppError.js';
 
 const TRANSITIONS_VALIDES = {
   PLANIFIE: ['EN_COURS', 'ANNULE'],
-  EN_COURS: ['TERMINE', 'ANNULE'],
+  EN_COURS: ['TERMINE'],
   TERMINE: [],
-  done: [],
   ANNULE: [],
 };
 
@@ -22,12 +21,12 @@ export const createOrdreService = async ({
   quantiteAFabriquer,
   assigneA,
 }) => {
-  const produitExists = await Produit.findById(produit);
+  const produitExists = await produitRepository.findProductById(produit);
   if (!produitExists) {
     throw new NotFoundError('Produit introuvable');
   }
 
-  const userExists = await User.findById(assigneA);
+  const userExists = await userRepository.findUserById(assigneA);
   if (!userExists) {
     throw new NotFoundError('Utilisateur assigné introuvable');
   }
@@ -117,7 +116,7 @@ export const updateOrdreService = async (id, updateData) => {
   }
 
   if (updateData.assigneA !== undefined) {
-    const userExists = await User.findById(updateData.assigneA);
+    const userExists = await userRepository.findUserById(updateData.assigneA);
     if (!userExists) {
       throw new NotFoundError('Utilisateur assigné introuvable');
     }
@@ -133,6 +132,10 @@ export const updateStatutService = async (id, nouveauStatut) => {
     throw new NotFoundError('Ordre de fabrication introuvable');
   }
 
+  if (nouveauStatut !== 'ANNULE') {
+    throw new BadRequestError('Use the dedicated start and finish endpoints for production transitions.');
+  }
+
   const statutActuel = ordre.statut;
   const transitionsPermises = TRANSITIONS_VALIDES[statutActuel];
 
@@ -145,7 +148,14 @@ export const updateStatutService = async (id, nouveauStatut) => {
   return ordreRepository.updateStatut(id, nouveauStatut);
 };
 
-export const startOrdreService = async (id, userId) => {
+const assertAssignedOperator = (ordre, userId, role) => {
+  const assignedUserId = ordre.assigneA?._id || ordre.assigneA;
+  if (role !== 'ADMIN' && assignedUserId?.toString() !== userId?.toString()) {
+    throw new ForbiddenError('Cet ordre n’est pas assigné à votre compte.');
+  }
+};
+
+export const startOrdreService = async (id, userId, role) => {
   const ordre = await ordreRepository.findOrdreById(id);
   if (!ordre) {
     throw new NotFoundError('Ordre de fabrication introuvable');
@@ -155,6 +165,7 @@ export const startOrdreService = async (id, userId) => {
       `Un ordre de fabrication ne peut être démarré que depuis le statut PLANIFIE (statut actuel : ${ordre.statut})`
     );
   }
+  assertAssignedOperator(ordre, userId, role);
 
   const besoins = new Map();
   for (const item of ordre.composition) {
@@ -224,7 +235,7 @@ export const startOrdreService = async (id, userId) => {
   }
 };
 
-export const finishOrdreService = async (id, userId) => {
+export const finishOrdreService = async (id, userId, role) => {
   const ordre = await ordreRepository.findOrdreById(id);
   if (!ordre) {
     throw new NotFoundError('Ordre de fabrication introuvable');
@@ -234,15 +245,16 @@ export const finishOrdreService = async (id, userId) => {
       `Un ordre de fabrication ne peut être finalisé que depuis le statut EN_COURS (statut actuel : ${ordre.statut})`
     );
   }
+  assertAssignedOperator(ordre, userId, role);
 
   const session = await mongoose.startSession();
   try {
     let ordreFinalise;
     await session.withTransaction(async () => {
-      const produit = await Produit.findOneAndUpdate(
-        { _id: ordre.produit._id || ordre.produit },
-        { $inc: { quantiteDisponible: ordre.quantiteAFabriquer } },
-        { new: true, runValidators: true, session }
+      const produit = await produitRepository.incrementProductStock(
+        ordre.produit._id || ordre.produit,
+        ordre.quantiteAFabriquer,
+        { session }
       );
 
       if (!produit) {
@@ -309,36 +321,54 @@ export const deleteOrdreService = async (id) => {
   return ordre;
 };
 
-export const getFilteredOrderService = async(query)=>{
-  const { status, startDate, endDate, page = 1, limit = 10 } = query;
-  const filter ={};
-  if(status){
-    filter.status = status;
+export const getFilteredOrdersService = async ({
+  statut,
+  produit,
+  assigneA,
+  startDate,
+  endDate,
+  page = 1,
+  limit = 10,
+} = {}) => {
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+  if (!Number.isInteger(pageNum) || pageNum < 1 || !Number.isInteger(limitNum) || limitNum < 1 || limitNum > 100) {
+    throw new BadRequestError('page doit être positif et limit doit être compris entre 1 et 100.');
   }
+
+  const filter = {};
+  if (statut) filter.statut = statut.toUpperCase();
+  if (produit) filter.produit = produit;
+  if (assigneA) filter.assigneA = assigneA;
+
   if (startDate || endDate) {
     filter.createdAt = {};
     if (startDate) {
-      filter.createdAt.$gte = new Date(startDate);
+      const start = new Date(startDate);
+      if (Number.isNaN(start.getTime())) throw new BadRequestError('startDate invalide.');
+      filter.createdAt.$gte = start;
     }
     if (endDate) {
       const end = new Date(endDate);
+      if (Number.isNaN(end.getTime())) throw new BadRequestError('endDate invalide.');
       end.setHours(23, 59, 59, 999);
       filter.createdAt.$lte = end;
     }
+    if (filter.createdAt.$gte && filter.createdAt.$lte && filter.createdAt.$gte > filter.createdAt.$lte) {
+      throw new BadRequestError('startDate doit précéder endDate.');
+    }
   }
-  const pageNum = parseInt(page, 10);
-  const limitNum = parseInt(limit, 10);
-  const skip = (pageNum - 1) * limitNum;
 
+  const skip = (pageNum - 1) * limitNum;
   const [orders, total] = await Promise.all([
     ordreRepository.findOrders(filter, skip, limitNum),
-    ordreRepository.countOrders(filter)
+    ordreRepository.countOrders(filter),
   ]);
+
   return {
     orders,
     total,
     totalPages: Math.ceil(total / limitNum),
-    currentPage: pageNum
-  }
-
-}
+    currentPage: pageNum,
+  };
+};
