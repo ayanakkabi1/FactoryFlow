@@ -4,6 +4,9 @@ import app from './app.js';
 const port = Number(process.env.PORT) || 5000;
 
 async function startServer() {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('Missing required environment variable: JWT_SECRET');
+  }
   await connectDatabase();
 
   const server = app.listen(port, () => {

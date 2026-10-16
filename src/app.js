@@ -31,15 +31,6 @@ app.get('/', (req, res) => {
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-app.use((error, req, res, next) => {
-  const statusCode = error.statusCode || 500;
-
-  return res.status(statusCode).json({
-    success: false,
-    message: error.message || 'Une erreur interne est survenue.',
-  });
-});
-
 app.use((req, res, next) => {
   next(new AppError(`Impossible de trouver la route ${req.originalUrl} sur ce serveur.`, 404));
 });
