@@ -11,6 +11,14 @@ import * as stockService from '../services/stockService.js';
  *       200:
  *         description: Stock alerts.
  * /api/stock/mouvements:
+ *   get:
+ *     tags: [Stock]
+ *     summary: List recorded stock movements
+ *     description: Requires ADMIN role.
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Stock movements with related material, product, user and order data.
  *   post:
  *     tags: [Stock]
  *     summary: Record an incoming or outgoing stock movement
@@ -57,6 +65,15 @@ export const getAlertesStock = async (req, res, next) => {
       success: true,
       data: alertes,
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getMouvements = async (req, res, next) => {
+  try {
+    const mouvements = await stockService.getMouvementsStockService();
+    return res.status(200).json({ success: true, count: mouvements.length, data: mouvements });
   } catch (error) {
     return next(error);
   }

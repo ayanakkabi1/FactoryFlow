@@ -101,7 +101,7 @@ describe('Stock movement API', () => {
         quantite: 4,
       });
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(400);
     expect(response.body.message).toBe('Stock insuffisant');
     expect(await MouvementStock.countDocuments()).toBe(0);
   });

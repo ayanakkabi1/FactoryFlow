@@ -1,6 +1,8 @@
+import mongoose from 'mongoose';
 import * as stockRepository from '../repositories/stockRepository.js';
 import * as materialRepository from '../repositories/materialRepository.js';
 import * as notificationRepository from '../repositories/notificationRepository.js';
+import { BadRequestError, NotFoundError } from '../errors/AppError.js';
 
 export const enregistrerMouvementService = async ({
   type,
@@ -9,70 +11,60 @@ export const enregistrerMouvementService = async ({
   motif,
   userId,
 }) => {
-    const matiere = await materialRepository.findById(matiereId);
-    if (!matiere) {
-      throw new Error("La matière visée n'existe pas");
-    }
+  const amount = Number(quantite);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new BadRequestError('La quantité doit être supérieure à zéro.');
+  }
+  if (!['ENTREE', 'SORTIE'].includes(type)) {
+    throw new BadRequestError('Le type doit être ENTREE ou SORTIE.');
+  }
 
-    const quantiteNum = Number(quantite);
-    if (!Number.isFinite(quantiteNum) || quantiteNum <= 0) {
-      throw new Error('La quantité doit être un nombre supérieur à zéro');
-    }
+  const session = await mongoose.startSession();
+  try {
+    let result;
+    await session.withTransaction(async () => {
+      const material = await materialRepository.findById(matiereId, { session });
+      if (!material) throw new NotFoundError('Matière première introuvable.');
 
-    if (type !== 'ENTREE' && type !== 'SORTIE') {
-      throw new Error('Le type de mouvement doit être ENTREE ou SORTIE');
-    }
+      const updatedMaterial = type === 'ENTREE'
+        ? await materialRepository.incrementeMaterial(matiereId, amount, { session })
+        : await materialRepository.decrementMaterialIfAvailable(matiereId, amount, { session });
+      if (!updatedMaterial) throw new BadRequestError('Stock insuffisant');
 
-    if (type === 'SORTIE' && matiere.quantiteDisponible < quantiteNum) {
-      throw new Error('Stock insuffisant');
-    }
-
-    const impactStock = type === 'ENTREE' ? quantiteNum : -quantiteNum;
-    const mouvement = await stockRepository.createMouvement({
-      type,
-      matiere: matiereId,
-      utilisateur: userId,
-      quantite: quantiteNum,
-      motif: motif || 'Réapprovisionnement stock',
-    });
-    const matiereMaj = await materialRepository.incrementeMaterial(
-      matiereId,
-      impactStock
-    );
-
-    let alerte = null;
-    if (type === 'SORTIE' && matiereMaj.quantiteDisponible <= matiereMaj.seuilAlerte) {
-      const niveau = matiereMaj.quantiteDisponible === 0 ? 'RUPTURE' : 'CRITIQUE';
-      const message = `Alerte stock : La matière première "${matiereMaj.name}" (${matiereMaj.reference}) est sous son seuil d'alerte. Quantité restante : ${matiereMaj.quantiteDisponible} ${matiereMaj.uniteMesure} (seuil : ${matiereMaj.seuilAlerte} ${matiereMaj.uniteMesure}).`;
-
-      const notification = await notificationRepository.createNotification({
-        type: 'ALERTE_STOCK',
-        niveau,
-        message,
+      const mouvement = await stockRepository.createMouvement({
+        type,
         matiere: matiereId,
-        quantiteDisponible: matiereMaj.quantiteDisponible,
-        seuilAlerte: matiereMaj.seuilAlerte,
-        mouvement: mouvement._id,
-      });
+        utilisateur: userId,
+        quantite: amount,
+        motif: motif || 'Réapprovisionnement stock',
+      }, { session });
 
-      alerte = {
-        declenchee: true,
-        niveau,
-        message,
-        notificationId: notification._id,
-        seuilAlerte: matiereMaj.seuilAlerte,
-        quantiteDisponible: matiereMaj.quantiteDisponible,
-        uniteMesure: matiereMaj.uniteMesure,
-        nomMatiere: matiereMaj.name,
-        reference: matiereMaj.reference,
+      let alerte = null;
+      if (type === 'SORTIE' && updatedMaterial.quantiteDisponible <= updatedMaterial.seuilAlerte) {
+        const niveau = updatedMaterial.quantiteDisponible === 0 ? 'RUPTURE' : 'CRITIQUE';
+        const message = `Alerte stock : ${updatedMaterial.name} est sous son seuil. Stock restant : ${updatedMaterial.quantiteDisponible} ${updatedMaterial.uniteMesure}.`;
+        const notification = await notificationRepository.createNotification({
+          type: 'ALERTE_STOCK',
+          niveau,
+          message,
+          matiere: matiereId,
+          quantiteDisponible: updatedMaterial.quantiteDisponible,
+          seuilAlerte: updatedMaterial.seuilAlerte,
+          mouvement: mouvement._id,
+        }, { session });
+        alerte = { declenchee: true, niveau, message, notificationId: notification._id };
+      }
+
+      result = {
+        mouvement,
+        nouvelleQuantiteDisponible: updatedMaterial.quantiteDisponible,
+        alerte,
       };
-    }
-
-    return {
-      mouvement,
-      nouvelleQuantiteDisponible: matiereMaj.quantiteDisponible,
-      alerte,
-    };
+    });
+    return result;
+  } finally {
+    await session.endSession();
+  }
 };
 
 export const getAlertesStockService = async () => {
@@ -86,7 +78,7 @@ export const getAlertesStockService = async () => {
       ...matObj,
       estSousSeuil: true,
       niveauAlerte: niveau,
-      messageAlerte: `Stock bas : ${mat.quantiteDisponible} ${mat.uniteMesure} restant(s) (seuil d'alerte : ${mat.seuilAlerte} ${mat.uniteMesure})`,
+      messageAlerte: `Stock bas : ${mat.quantiteDisponible} ${mat.uniteMesure} restant(s) (seuil : ${mat.seuilAlerte} ${mat.uniteMesure})`,
     };
   });
 
@@ -97,3 +89,5 @@ export const getAlertesStockService = async () => {
     notifications,
   };
 };
+
+export const getMouvementsStockService = () => stockRepository.findAll();
