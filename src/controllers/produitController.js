@@ -1,5 +1,71 @@
 import * as produitService from '../services/produitService.js';
 
+/**
+ * @openapi
+ * /api/produits:
+ *   get:
+ *     tags: [Products]
+ *     summary: List products
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Products with a result count.
+ *   post:
+ *     tags: [Products]
+ *     summary: Create a product
+ *     description: Requires ADMIN role.
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       201:
+ *         description: Product created.
+ *       400:
+ *         description: Invalid data or duplicate reference.
+ * /api/produits/{id}:
+ *   parameters:
+ *     - in: path
+ *       name: id
+ *       required: true
+ *       schema:
+ *         type: string
+ *       description: MongoDB product ID.
+ *   get:
+ *     tags: [Products]
+ *     summary: Get a product by ID
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Product details.
+ *       404:
+ *         description: Product not found.
+ *   put:
+ *     tags: [Products]
+ *     summary: Update a product
+ *     description: Requires ADMIN role.
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       200:
+ *         description: Product updated.
+ *   delete:
+ *     tags: [Products]
+ *     summary: Delete a product
+ *     description: Requires ADMIN role.
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Product deleted.
+ */
 export const getAllProducts = async (req, res, next) => {
     try {
         const products = await produitService.getAllProducts();
