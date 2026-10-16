@@ -17,9 +17,13 @@ export const login = async (email, password) => {
     throw genericError;
   }
 
+  if (!process.env.JWT_SECRET) {
+    throw new Error('Missing required environment variable: JWT_SECRET');
+  }
+
   const token = jwt.sign(
     { userId: user._id, role: user.role },
-    process.env.JWT_SECRET || 'super_secret_jwt_key',
+    process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
   );
 

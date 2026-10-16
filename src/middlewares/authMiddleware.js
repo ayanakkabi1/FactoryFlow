@@ -11,11 +11,12 @@ export const verifyToken = (req, res, next) => {
     });
   }
 
+  if (!process.env.JWT_SECRET) {
+    return next(new Error('Missing required environment variable: JWT_SECRET'));
+  }
+
   try {
-    req.user = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'super_secret_jwt_key',
-    );
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
     return next();
   } catch {
     return res.status(401).json({

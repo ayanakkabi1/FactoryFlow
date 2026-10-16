@@ -1,6 +1,10 @@
 import User from '../models/User.js';
 
-export const createUser = async (userData) => {
+export const createUser = async (userData, options = {}) => {
+  if (options.session) {
+    const [user] = await User.create([userData], options);
+    return user;
+  }
   return await User.create(userData);
 };
 

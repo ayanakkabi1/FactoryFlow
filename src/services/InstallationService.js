@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
-import User from '../models/User.js';
+import * as userRepository from '../repositories/userRepository.js';
 import * as installationRepository from '../repositories/installationRepository.js';
 import { BadRequestError } from '../errors/AppError.js';
 
@@ -22,17 +22,12 @@ export const initialize = async (data) => {
         throw new BadRequestError("L'application est déjà installée.");
       }
 
-      const [createdAdmin] = await User.create(
-        [
-          {
-            name,
-            email,
-            password: hashedPassword,
-            role: 'ADMIN',
-          },
-        ],
-        { session }
-      );
+      const createdAdmin = await userRepository.createUser({
+        name,
+        email,
+        password: hashedPassword,
+        role: 'ADMIN',
+      }, { session });
 
       await installationRepository.createInstallation(
         {
