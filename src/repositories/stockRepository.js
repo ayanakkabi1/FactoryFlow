@@ -10,7 +10,12 @@ export const updateMouvement = async(id,data)=> {
 }
 
 export const findAll = async() => {
-    return await MouvementStock.find();
+    return await MouvementStock.find()
+      .populate('matiere')
+      .populate('produit')
+      .populate('utilisateur', '-password')
+      .populate('ordreFabrication')
+      .sort({ dateMouvement: -1 });
 }
 
 export const findById = async(id) => {

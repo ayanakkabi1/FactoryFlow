@@ -2,6 +2,7 @@ import express from 'express';
 import {
   enregistrerMouvement,
   getAlertesStock,
+  getMouvements,
 } from '../controllers/stockController.js';
 import { verifyToken, checkRole } from '../middlewares/authMiddleware.js';
 import {
@@ -44,6 +45,8 @@ router.get(
   checkRole('ADMIN', 'OPERATOR', 'OPERATEUR'),
   getAlertesStock,
 );
+
+router.get('/mouvements', verifyToken, checkRole('ADMIN'), getMouvements);
 
 router.post(
   '/mouvements',

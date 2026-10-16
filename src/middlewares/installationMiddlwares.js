@@ -1,5 +1,4 @@
 import { validationResult } from "express-validator";
-import { installationRules } from "../validator/installation.validator";
 
 export const validateInstallation = (req, res,next) => {
     const errors = validationResult(req);
