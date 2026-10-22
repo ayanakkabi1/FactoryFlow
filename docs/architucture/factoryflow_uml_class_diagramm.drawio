@@ -1,0 +1,136 @@
+<mxfile host="65bd71144e" pages="1">
+    <diagram name="Class Diagram - FactoryFlow" id="FactoryFlowDiagram">
+        <mxGraphModel dx="2364" dy="916" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="user" parent="1" style="swimlane;html=1;whiteSpace=wrap;fontSize=12;spacing=8;spacingLeft=12;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;rounded=1;shadow=1;fillColor=#E1F5FE;strokeColor=#0288D1;align=left;" value="&lt;b&gt;User&lt;/b&gt;&lt;hr/&gt;- name: String&lt;br/&gt;- email: String&lt;br/&gt;- passwordHash: String&lt;br/&gt;- role: RoleEnum {ADMIN, OPERATEUR}&lt;br/&gt;- createdAt: Date&lt;br/&gt;- updatedAt: Date&lt;hr/&gt;+ authenticate(): Boolean&lt;br/&gt;+ updateProfile(): Void" vertex="1">
+                    <mxGeometry height="230" width="310" x="60" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="sysconfig" parent="1" style="swimlane;html=1;whiteSpace=wrap;fontSize=12;spacing=8;spacingLeft=12;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;rounded=1;shadow=1;fillColor=#ECEFF1;strokeColor=#607D8B;align=left;" value="&lt;b&gt;InstallationStatus&lt;/b&gt;&lt;hr/&gt;- isInstalled: Boolean&lt;br/&gt;- installedAt: Date&lt;br/&gt;- adminInitialEmail: String&lt;hr/&gt;+ checkInstallationStatus(): Boolean&lt;br/&gt;+ completeSetup(): Void" vertex="1">
+                    <mxGeometry height="180" width="310" x="60" y="380" as="geometry"/>
+                </mxCell>
+                <mxCell id="matiere" parent="1" style="swimlane;html=1;whiteSpace=wrap;fontSize=12;spacing=8;spacingLeft=12;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;rounded=1;shadow=1;fillColor=#E8F5E9;strokeColor=#388E3C;align=left;" value="&lt;b&gt;MatierePremiere&lt;/b&gt;&lt;hr/&gt;- reference: String {unique}&lt;br/&gt;- nom: String&lt;br/&gt;- uniteMesure: String&lt;br/&gt;- quantiteDisponible: Number&lt;br/&gt;- seuilAlerte: Number&lt;hr/&gt;+ ajusterStock(quantite: Number): Void&lt;br/&gt;+ verifierSeuilAlerte(): Boolean" vertex="1">
+                    <mxGeometry height="230" width="330" x="450" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_user_mvt" edge="1" parent="matiere" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=1.5;endArrow=open;endSize=10;" value="effectue">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="-80" y="-20"/>
+                            <mxPoint x="400" y="-20"/>
+                        </Array>
+                        <mxPoint x="-79.99999999999977" y="60" as="sourcePoint"/>
+                        <mxPoint x="400" y="40" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="r_user_mvt_a" connectable="0" parent="r_user_mvt" style="edgeLabel;html=1;resizable=0;align=left;verticalAlign=bottom;fontStyle=1;" value="1" vertex="1">
+                    <mxGeometry relative="1" x="-0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_user_mvt_b" connectable="0" parent="r_user_mvt" style="edgeLabel;html=1;resizable=0;align=right;verticalAlign=bottom;fontStyle=1;" value="0..*" vertex="1">
+                    <mxGeometry relative="1" x="0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="mouvement" parent="1" style="swimlane;html=1;whiteSpace=wrap;fontSize=12;spacing=8;spacingLeft=12;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;rounded=1;shadow=1;fillColor=#E8F5E9;strokeColor=#388E3C;align=left;" value="&lt;b&gt;MouvementStock&lt;/b&gt;&lt;hr/&gt;- type: TypeMouvementEnum {ENTREE, SORTIE}&lt;br/&gt;- quantite: Number&lt;br/&gt;- dateMouvement: Date&lt;hr/&gt;+ enregistrerMouvement(): Void" vertex="1">
+                    <mxGeometry height="190" width="340" x="850" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="produit" parent="1" style="swimlane;html=1;whiteSpace=wrap;fontSize=12;spacing=8;spacingLeft=12;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;rounded=1;shadow=1;fillColor=#FFF3E0;strokeColor=#F57C00;align=left;" value="&lt;b&gt;Produit&lt;/b&gt;&lt;hr/&gt;- reference: String {unique}&lt;br/&gt;- nom: String&lt;br/&gt;- description: String&lt;br/&gt;- prix: Number {optionnel}&lt;hr/&gt;+ ajouterComposition(matiere: MatierePremiere, quantite: Number): Void&lt;br/&gt;+ calculerCoutFabrication(): Number" vertex="1">
+                    <mxGeometry height="220" width="330" x="450" y="400" as="geometry"/>
+                </mxCell>
+                <mxCell id="composition" parent="1" style="swimlane;html=1;whiteSpace=wrap;fontSize=12;spacing=8;spacingLeft=12;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;rounded=1;shadow=1;fillColor=#FFF3E0;strokeColor=#F57C00;align=left;" value="&lt;b&gt;CompositionItem&lt;/b&gt;&lt;hr/&gt;- quantiteNecessaire: Number&lt;hr/&gt;+ getDetailsMatiere(): MatierePremiere" vertex="1">
+                    <mxGeometry height="150" width="330" x="450" y="715" as="geometry"/>
+                </mxCell>
+                <mxCell id="of" parent="1" style="swimlane;html=1;whiteSpace=wrap;fontSize=12;spacing=8;spacingLeft=12;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;rounded=1;shadow=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;align=left;" value="&lt;b&gt;OrdreFabrication&lt;/b&gt;&lt;hr/&gt;- code: String {unique}&lt;br/&gt;- quantiteAFabriquer: Number&lt;br/&gt;- statut: StatutOFEnum {PLANIFIE, EN_COURS, TERMINE, ANNULE}&lt;br/&gt;- dateCreation: Date&lt;br/&gt;- dateDemarrage: Date&lt;br/&gt;- dateFin: Date&lt;hr/&gt;+ verifierStockDisponible(): Boolean&lt;br/&gt;+ demarrerOrdre(): Void&lt;br/&gt;+ terminerOrdre(): Void&lt;br/&gt;+ annulerOrdre(): Void" vertex="1">
+                    <mxGeometry height="300" width="370" x="850" y="360" as="geometry"/>
+                </mxCell>
+                <mxCell id="snapshot" parent="1" style="swimlane;html=1;whiteSpace=wrap;fontSize=12;spacing=8;spacingLeft=12;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;rounded=1;shadow=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;align=left;" value="&lt;b&gt;CompositionItemSnapshot&lt;/b&gt;&lt;hr/&gt;- nomMatiere: String&lt;br/&gt;- uniteMesure: String&lt;br/&gt;- quantiteUnitaireNecessaire: Number&lt;hr/&gt;+ calculerBesoinsTotaux(quantiteOF): Number" vertex="1">
+                    <mxGeometry height="170" width="370" x="820" y="715" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_user_of" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=1.5;endArrow=open;endSize=10;" target="of" value="assigne / concerne">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1035" y="290"/>
+                        </Array>
+                        <mxPoint x="370" y="280" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="r_user_of_a" connectable="0" parent="r_user_of" style="edgeLabel;html=1;resizable=0;align=left;verticalAlign=bottom;fontStyle=1;" value="1" vertex="1">
+                    <mxGeometry relative="1" x="-0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_user_of_b" connectable="0" parent="r_user_of" style="edgeLabel;html=1;resizable=0;align=right;verticalAlign=bottom;fontStyle=1;" value="0..*" vertex="1">
+                    <mxGeometry relative="1" x="0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_prod_comp" edge="1" parent="1" source="produit" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=1.5;startArrow=diamond;startFill=1;startSize=14;endArrow=open;endSize=10;" target="composition" value="définit">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_prod_comp_a" connectable="0" parent="r_prod_comp" style="edgeLabel;html=1;resizable=0;align=left;verticalAlign=bottom;fontStyle=1;" value="1" vertex="1">
+                    <mxGeometry relative="1" x="-0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_prod_comp_b" connectable="0" parent="r_prod_comp" style="edgeLabel;html=1;resizable=0;align=right;verticalAlign=bottom;fontStyle=1;" value="1..*" vertex="1">
+                    <mxGeometry relative="1" x="0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_comp_mat" edge="1" parent="1" source="composition" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=1.5;endArrow=open;endSize=10;" target="matiere" value="utilise">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="430" y="785"/>
+                            <mxPoint x="430" y="175"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="r_comp_mat_a" connectable="0" parent="r_comp_mat" style="edgeLabel;html=1;resizable=0;align=left;verticalAlign=bottom;fontStyle=1;" value="0..*" vertex="1">
+                    <mxGeometry relative="1" x="-0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_comp_mat_b" connectable="0" parent="r_comp_mat" style="edgeLabel;html=1;resizable=0;align=right;verticalAlign=bottom;fontStyle=1;" value="1" vertex="1">
+                    <mxGeometry relative="1" x="0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_of_mvt" edge="1" parent="1" source="of" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=1.5;dashed=1;endArrow=open;endSize=10;" target="mouvement" value="génère">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_of_mvt_a" connectable="0" parent="r_of_mvt" style="edgeLabel;html=1;resizable=0;align=left;verticalAlign=bottom;fontStyle=1;" value="0..1" vertex="1">
+                    <mxGeometry relative="1" x="-0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_of_mvt_b" connectable="0" parent="r_of_mvt" style="edgeLabel;html=1;resizable=0;align=right;verticalAlign=bottom;fontStyle=1;" value="0..*" vertex="1">
+                    <mxGeometry relative="1" x="0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_mat_mvt" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=1.5;endArrow=open;endSize=10;" target="mouvement" value="subit">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="780" y="150" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="r_mat_mvt_a" connectable="0" parent="r_mat_mvt" style="edgeLabel;html=1;resizable=0;align=left;verticalAlign=bottom;fontStyle=1;" value="1" vertex="1">
+                    <mxGeometry relative="1" x="-0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_mat_mvt_b" connectable="0" parent="r_mat_mvt" style="edgeLabel;html=1;resizable=0;align=right;verticalAlign=bottom;fontStyle=1;" value="0..*" vertex="1">
+                    <mxGeometry relative="1" x="0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_user_install" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=1.5;dashed=1;endArrow=open;endSize=10;" target="sysconfig" value="initialise (Admin)">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_user_install_a" connectable="0" parent="r_user_install" style="edgeLabel;html=1;resizable=0;align=left;verticalAlign=bottom;fontStyle=1;" value="1" vertex="1">
+                    <mxGeometry relative="1" x="-0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="r_user_install_b" connectable="0" parent="r_user_install" style="edgeLabel;html=1;resizable=0;align=right;verticalAlign=bottom;fontStyle=1;" value="0..1" vertex="1">
+                    <mxGeometry relative="1" x="0.8" y="-12" as="geometry"/>
+                </mxCell>
+                <mxCell id="9jEP4QGYTwhQ9V-GlaTy-2" edge="1" parent="1" source="user" style="edgeStyle=none;html=1;entryX=0.018;entryY=0.128;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;" target="of">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="360"/>
+                        </Array>
+                        <mxPoint x="380" y="280" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="9jEP4QGYTwhQ9V-GlaTy-6" edge="1" parent="1" source="snapshot" style="edgeStyle=none;html=1;exitX=0.474;exitY=-0.006;exitDx=0;exitDy=0;endArrow=none;endFill=0;exitPerimeter=0;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="790" y="520" as="sourcePoint"/>
+                        <mxPoint x="800" y="520" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="9jEP4QGYTwhQ9V-GlaTy-7" edge="1" parent="1" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;endArrow=none;endFill=0;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="780" y="520" as="sourcePoint"/>
+                        <mxPoint x="850" y="520" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
